@@ -34,11 +34,17 @@ d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/mas
 
   let xScale = d3.scaleLinear()
                   .domain(d3.extent(years))
-                  .range([padding,width+padding]);
+                  .range([0,width]);
 
   let yScale = d3.scaleLinear()
                   .domain([minGdp,maxGdp])
                   .range([height,(minGdp/maxGdp)*height]);
+
+  let linearScale = d3.scaleLinear()
+                    .domain([minGdp,maxGdp])
+                    .range([(minGdp/maxGdp)*height, height]);
+
+  scaledGdp = gdp.map( d => linearScale(d));
 
   let xAxis = d3.axisBottom(xScale)
                 .tickFormat(d3.format('d'));
@@ -56,7 +62,7 @@ d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/mas
 
   svg.append('g')
       .attr('id', 'x-axis')
-      .attr('transform', `translate(0,${height})`)
+      .attr('transform', `translate(${padding},${height})`)
       .call(xAxis);
 
   svg.append('g')
@@ -71,28 +77,26 @@ d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/mas
       .text('Gross Domestic Product');
 
   svg.selectAll('rect')
-      .data(gdp)
+      .data(scaledGdp)
       .enter()
       .append('rect')
       .classed('bar', true)
       .attr('width', barWidth)
-      .attr('height', d => height-yScale(d))
+      .attr('height', d => d)
       .attr('x', (d, i) => i * (barWidth))
-      .attr('y', d => yScale(d))
+      .attr('y', d => height - d)
       .attr('fill', '#33adff')
-      .attr('transform',`translate(${padding},0)`)
+      .attr('transform', `translate(${padding},0)`)
       .attr('data-date', (d, i) => data.data[i][0])
-      .attr('data-gdp', d => d)
+      .attr('data-gdp', (d, i) => data.data[i][1])
       .on('mouseover', (d, i) => {
-        
-        let temp = height - yScale(d);
         overlay.transition()
         .duration(0)
-        .style('height', temp + 'px')
+        .style('height', d + 'px')
         .style('width', barWidth + 'px')
         .style('opacity', .9)
         .style('left', (i * barWidth) - 10 + 'px')
-        .style('top', yScale(d) + 'px')
+        .style('top', height -d + 'px')
         .style('transform', 'translateX(60px)');
 
         tooltip.transition()
